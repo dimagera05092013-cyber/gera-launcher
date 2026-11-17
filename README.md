@@ -6,6 +6,10 @@ Minecraft: Java Edition 26.3 на Rust. Самостоятельный, неоф
 GERA не зависит от официального Horizon Launcher. У Horizon берутся только клиент и
 каталог модов; установку, версии, ресурсы, запуск, сборки и моды GERA делает сама.
 
+![GERA Launcher](docs/screenshot.png)
+
+**Скачать:** [последний релиз](https://github.com/dimagera05092013-cyber/gera-launcher/releases/latest)
+
 **Руководство пользователя:** [docs/GUIDE.md](docs/GUIDE.md) — установка, сборки,
 моды, нативная сборка, разбор ошибок.
 
