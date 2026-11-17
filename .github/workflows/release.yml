@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Тег релиза, например v0.9.0"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  windows:
+    name: Windows exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run tauri build -- --no-bundle
+
+      - name: Prepare asset
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          Copy-Item src-tauri/target/release/gera-launcher.exe out/gera-launcher.exe
+          $hash = (Get-FileHash out/gera-launcher.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  gera-launcher.exe" | Out-File -Encoding ascii out/gera-launcher.exe.sha256
+          Get-Content out/gera-launcher.exe.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: out/*
+          if-no-files-found: error
+
+  linux:
+    name: Linux binary
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run tauri build -- --no-bundle
+
+      - name: Prepare asset
+        run: |
+          mkdir -p out
+          cp src-tauri/target/release/gera-launcher out/gera-launcher-linux
+          cd out
+          sha256sum gera-launcher-linux > gera-launcher-linux.sha256
+          cat gera-launcher-linux.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: out/*
+          if-no-files-found: error
+
+  publish:
+    name: GitHub Release
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect files
+        run: |
+          mkdir -p dist
+          cp artifacts/windows/* dist/
+          cp artifacts/linux/* dist/
+          ls -lh dist
+
+      - name: Release notes
+        run: |
+          notes="docs/release-notes/${TAG#v}.md"
+          if [ -f "$notes" ]; then
+            cp "$notes" release-notes.md
+          else
+            printf '# GERA Launcher %s\n\nСборка выпущена автоматически.\n' "$TAG" > release-notes.md
+          fi
+          cat release-notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: GERA Launcher ${{ env.TAG }}
+          body_path: release-notes.md
+          fail_on_unmatched_files: true
+          files: |
+            dist/gera-launcher.exe
+            dist/gera-launcher.exe.sha256
+            dist/gera-launcher-linux
+            dist/gera-launcher-linux.sha256
