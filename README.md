@@ -8,7 +8,7 @@ GERA не зависит от официального Horizon Launcher. У Hori
 
 ![GERA Launcher](docs/screenshot.png)
 
-**Скачать:** [последний релиз](https://github.com/dimagera05092013-cyber/gera-launcher/releases/latest)
+**Скачать:** [последний релиз](https://github.com/gera2347/gera-launcher/releases/latest)
 
 **Руководство пользователя:** [docs/GUIDE.md](docs/GUIDE.md) — установка, сборки,
 моды, нативная сборка, разбор ошибок.
@@ -71,7 +71,7 @@ npm run tauri build -- --no-bundle
 ## Скачать и обновления
 
 Готовые сборки публикуются в
-[GitHub Releases](https://github.com/dimagera05092013-cyber/gera-launcher/releases/latest):
+[GitHub Releases](https://github.com/gera2347/gera-launcher/releases/latest):
 `gera-launcher.exe` для Windows 10/11 x64 и `gera-launcher-linux` для Linux x64.
 
 Лаунчер сам проверяет новые релизы при запуске: если версия новее, появляется

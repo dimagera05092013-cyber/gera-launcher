@@ -293,7 +293,7 @@ cargo test --lib --target x86_64-pc-windows-gnu
 - `src-tauri/src/update.rs` — проверка последнего релиза через
   `api.github.com/repos/<owner>/gera-launcher/releases/latest`, сравнение
   версий, скачивание ассета, SHA-256, замена файла и перезапуск.
-- Константа `REPO` в `update.rs` — `dimagera05092013-cyber/gera-launcher`.
+- Константа `REPO` в `update.rs` — `gera2347/gera-launcher`.
   `GERA_UPDATE_REPO` в окружении переопределяет её (для отладки),
   `GERA_UPDATE_MOCK=0.9.1` показывает окно обновления без сети.
 - Ассеты релиза: `gera-launcher.exe` + `.sha256` (Windows),
@@ -321,8 +321,8 @@ cargo test --lib --target x86_64-pc-windows-gnu
   и первого живого автообновления.
 
 Живой релиз и тест (17.11.2026):
-- Репозиторий: https://github.com/dimagera05092013-cyber/gera-launcher
-- Релиз: https://github.com/dimagera05092013-cyber/gera-launcher/releases/tag/v0.9.0
+- Репозиторий: https://github.com/gera2347/gera-launcher
+- Релиз: https://github.com/gera2347/gera-launcher/releases/tag/v0.9.0
   (Windows exe 4,7 МБ, Linux 9,4 МБ, оба с `.sha256`).
 - GitHub Actions прошли: Checks и Release (windows-latest, ubuntu-22.04).
 - Живой тест автообновления на Linux: установлен 0.9.0, создан временный релиз
@@ -429,7 +429,7 @@ cargo test --lib --target x86_64-pc-windows-gnu
     `WebView2Loader.dll` больше не нужна (см. 3.2.2).
 13. «Хочу автообновление по воздуху через GitHub, с окном „Доступна новая
     версия“» → открытый репозиторий, GitHub Actions, релиз 0.9.0 и апдейтер
-    (см. 3.8). Аккаунт GitHub: `dimagera05092013-cyber`.
+    (см. 3.8). Аккаунт GitHub: `gera2347` (аккаунт переименован).
 14. «При наведении мыши активная кнопка становится серой, а должна оставаться
     цветной» → причина: `.build-pill:hover:not(:disabled)` (три класса)
     перебивал `.build-pill.active` (два класса). Добавлено исключение

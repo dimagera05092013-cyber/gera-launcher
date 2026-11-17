@@ -14,7 +14,7 @@ use crate::paths::Paths;
 /// The CI workflow publishes `gera-launcher.exe` (Windows) and
 /// `gera-launcher-linux` (Linux) plus matching `.sha256` files.
 /// An empty repository owner disables update checks.
-pub const REPO: &str = "dimagera05092013-cyber/gera-launcher";
+pub const REPO: &str = "gera2347/gera-launcher";
 
 /// Current release of this build, as written in Cargo.toml.
 pub fn current_version() -> &'static str {
