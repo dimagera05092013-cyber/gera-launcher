@@ -52,9 +52,15 @@
       color var(--motion-fast) var(--ease-standard),
       transform var(--motion-fast) var(--ease-standard);
   }
-  .icon-button:hover:not(:disabled) {
+  .icon-button:hover:not(:disabled):not(.tonal):not(.filled):not(.active) {
     background: var(--surface-container-highest);
     color: var(--on-surface);
+  }
+  .icon-button.tonal:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-secondary-container) 9%, var(--secondary-container));
+  }
+  .icon-button.filled:hover:not(:disabled) {
+    filter: brightness(1.08);
   }
   .icon-button:active:not(:disabled) {
     transform: scale(0.92);
@@ -80,6 +86,9 @@
   .icon-button.active {
     background: var(--primary-container);
     color: var(--on-primary-container);
+  }
+  .icon-button.active:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-primary-container) 9%, var(--primary-container));
   }
   .icon-button.sm {
     width: 36px;

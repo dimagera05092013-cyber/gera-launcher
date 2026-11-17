@@ -749,12 +749,15 @@
     cursor: pointer;
     transition: background-color var(--motion-fast) var(--ease-standard);
   }
-  .build-pill:hover:not(:disabled) {
+  .build-pill:hover:not(:disabled):not(.active) {
     background: var(--surface-container);
   }
   .build-pill.active {
     background: var(--primary-container);
     color: var(--on-primary-container);
+  }
+  .build-pill.active:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--on-primary-container) 9%, var(--primary-container));
   }
   .pill-avatar {
     width: 40px;
