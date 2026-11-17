@@ -1650,11 +1650,20 @@ mod tests {
         let result = launch_server_core(None, &state, "server-1").unwrap();
         assert!(result.pid > 0);
 
-        let deadline = Instant::now() + Duration::from_secs(5);
-        while !args_file.is_file() && Instant::now() < deadline {
+        // The fake client creates the file first and writes into it afterwards,
+        // so wait for the content, not just for the file to exist.
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let mut args = String::new();
+        while Instant::now() < deadline {
+            if let Ok(text) = fs::read_to_string(&args_file) {
+                if text.contains("--server") && text.contains("--resources") {
+                    args = text;
+                    break;
+                }
+            }
             std::thread::sleep(Duration::from_millis(20));
         }
-        let args = fs::read_to_string(&args_file).expect("fake client did not run");
+        assert!(!args.is_empty(), "fake client did not finish writing arguments");
         let lines: Vec<&str> = args.lines().collect();
         let index = lines
             .iter()
