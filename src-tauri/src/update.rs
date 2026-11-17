@@ -314,7 +314,11 @@ fn swap_and_restart(staged: &Path) -> Result<(), String> {
         .file_name()
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_else(|| "gera-launcher.exe".into());
-    let backup = current.with_file_name(format!("{file_name}.old"));
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let backup = current.with_file_name(format!("{file_name}.{stamp}.old"));
 
     // A running exe cannot be overwritten, but Windows allows renaming it.
     let _ = fs::remove_file(&backup);
@@ -385,9 +389,16 @@ pub fn cleanup_old_binary() {
     #[cfg(windows)]
     {
         if let Ok(current) = std::env::current_exe() {
-            if let Some(name) = current.file_name() {
-                let backup = current.with_file_name(format!("{}.old", name.to_string_lossy()));
-                let _ = fs::remove_file(backup);
+            if let (Some(parent), Some(name)) = (current.parent(), current.file_name()) {
+                let prefix = format!("{}.", name.to_string_lossy());
+                if let Ok(entries) = fs::read_dir(parent) {
+                    for entry in entries.flatten() {
+                        let file_name = entry.file_name().to_string_lossy().into_owned();
+                        if file_name.starts_with(&prefix) && file_name.ends_with(".old") {
+                            let _ = fs::remove_file(entry.path());
+                        }
+                    }
+                }
             }
         }
     }
