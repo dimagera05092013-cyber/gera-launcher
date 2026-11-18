@@ -9,6 +9,7 @@ mod servers;
 mod store;
 mod sysutil;
 mod update;
+mod vanilla;
 
 use commands::AppState;
 use tauri::Manager;
@@ -40,6 +41,34 @@ pub fn import_cli(folder: &str, source: &str) -> i32 {
                 "ГОТОВО: {} (Minecraft {})",
                 result.path, result.minecraft
             );
+            0
+        }
+        Err(error) => {
+            eprintln!("ОШИБКА: {error}");
+            1
+        }
+    }
+}
+
+/// Headless vanilla install: `gera-launcher --java-install <версия>`.
+pub fn java_install_cli(id: &str) -> i32 {
+    match vanilla::install_cli(id.to_string()) {
+        Ok(()) => {
+            println!("ГОТОВО: Minecraft {id}");
+            0
+        }
+        Err(error) => {
+            eprintln!("ОШИБКА: {error}");
+            1
+        }
+    }
+}
+
+/// Headless vanilla launch: `gera-launcher --java-play <версия> <ник>`.
+pub fn java_play_cli(id: &str, player: &str) -> i32 {
+    match vanilla::launch_blocking(id.to_string(), player.to_string()) {
+        Ok(result) => {
+            println!("ГОТОВО: PID {} · лог {}", result.pid, result.log_path);
             0
         }
         Err(error) => {
@@ -129,6 +158,10 @@ pub fn run() {
             update::update_check,
             update::update_download,
             update::update_install,
+            vanilla::java_versions,
+            vanilla::java_install,
+            vanilla::java_launch,
+            vanilla::java_folder,
         ])
         .run(tauri::generate_context!())
         .expect("GERA Launcher failed to start");

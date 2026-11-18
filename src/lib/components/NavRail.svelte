@@ -6,6 +6,7 @@
 
   const items: Array<{ id: PageId; icon: IconName; label: string }> = [
     { id: "home", icon: "home", label: "Главная" },
+    { id: "minecraft", icon: "java", label: "Java" },
     { id: "builds", icon: "builds", label: "Сборки" },
     { id: "servers", icon: "servers", label: "Серверы" },
     { id: "mods", icon: "mods", label: "Моды" },

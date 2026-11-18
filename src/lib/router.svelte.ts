@@ -7,6 +7,7 @@ type Loader = () => Promise<{ default: unknown }>;
 
 const registry: Record<PageId, Loader> = {
   home: () => import("../pages/Home.svelte"),
+  minecraft: () => import("../pages/Minecraft.svelte"),
   mods: () => import("../pages/Mods.svelte"),
   builds: () => import("../pages/Builds.svelte"),
   servers: () => import("../pages/Servers.svelte"),
@@ -15,6 +16,7 @@ const registry: Record<PageId, Loader> = {
 
 export const pageMeta: Record<PageId, { title: string; subtitle: string }> = {
   home: { title: "Главная", subtitle: "Ваша сборка и запуск игры" },
+  minecraft: { title: "Minecraft Java", subtitle: "Официальная Java Edition в один клик" },
   builds: { title: "Сборки", subtitle: "Миры, моды и настройки — всё раздельно" },
   servers: { title: "Серверы", subtitle: "Свои серверы, импорт из Horizon и вход в один клик" },
   mods: { title: "Моды", subtitle: "Каталог Horizon Mods Registry" },

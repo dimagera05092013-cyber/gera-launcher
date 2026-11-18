@@ -10,7 +10,7 @@ export interface Toast {
   kind: ToastKind;
 }
 
-export type PageId = "home" | "builds" | "servers" | "mods" | "settings";
+export type PageId = "home" | "minecraft" | "builds" | "servers" | "mods" | "settings";
 
 export const ui = $state({
   ready: false,

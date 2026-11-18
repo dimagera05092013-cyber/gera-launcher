@@ -24,6 +24,8 @@ import type {
   ServerStatus,
   Settings,
   UpdateInfo,
+  JavaVersionInfo,
+  JavaLaunch,
 } from "./types";
 
 export const api = {
@@ -96,6 +98,10 @@ export const api = {
   updateCheck: () => invoke<UpdateInfo | null>("update_check"),
   updateDownload: (version: string) => invoke<void>("update_download", { version }),
   updateInstall: () => invoke<void>("update_install"),
+  javaVersions: () => invoke<JavaVersionInfo[]>("java_versions"),
+  javaInstall: (id: string) => invoke<void>("java_install", { id }),
+  javaLaunch: (id: string, player: string) => invoke<JavaLaunch>("java_launch", { id, player }),
+  javaFolder: () => invoke<string>("java_folder"),
 };
 
 export function errorText(error: unknown): string {

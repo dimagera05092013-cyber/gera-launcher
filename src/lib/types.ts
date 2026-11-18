@@ -307,3 +307,23 @@ export interface UpdateProgress {
   downloaded: number;
   total: number;
 }
+
+export interface JavaVersionInfo {
+  id: string;
+  released: string;
+  installed: boolean;
+  size: number;
+  javaMajor: number;
+}
+
+export interface JavaProgress {
+  stage: string;
+  label: string;
+  done: number;
+  total: number;
+}
+
+export interface JavaLaunch {
+  pid: number;
+  logPath: string;
+}

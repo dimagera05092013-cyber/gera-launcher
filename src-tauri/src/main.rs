@@ -39,5 +39,19 @@ fn main() {
         };
         std::process::exit(gera_launcher_lib::import_cli(folder, source));
     }
+    if let Some(position) = args.iter().position(|arg| arg == "--java-install") {
+        let Some(id) = args.get(position + 1) else {
+            eprintln!("Использование: gera-launcher --java-install <версия>");
+            std::process::exit(2);
+        };
+        std::process::exit(gera_launcher_lib::java_install_cli(id));
+    }
+    if let Some(position) = args.iter().position(|arg| arg == "--java-play") {
+        let (Some(id), Some(player)) = (args.get(position + 1), args.get(position + 2)) else {
+            eprintln!("Использование: gera-launcher --java-play <версия> <ник>");
+            std::process::exit(2);
+        };
+        std::process::exit(gera_launcher_lib::java_play_cli(id, player));
+    }
     gera_launcher_lib::run()
 }
