@@ -1,7 +1,7 @@
 {
   "name": "gera-launcher",
   "private": true,
-  "version": "0.9.1",
+  "version": "0.10.0",
   "type": "module",
   "description": "GERA Launcher — Material You launcher for Horizon (Minecraft in Rust)",
   "scripts": {
