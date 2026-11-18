@@ -168,6 +168,10 @@ struct GameExited {
     profile_id: String,
     code: Option<i32>,
     log_path: String,
+    /// Last lines of the game's own output, so a silent exit is explained.
+    tail: String,
+    /// True when the game died within 20 seconds of starting.
+    early: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -678,11 +682,29 @@ fn start_game(
         command.arg("--server").arg(address);
     }
 
-    let child = crate::sysutil::quiet(&mut command)
-        .spawn()
-        .map_err(|e| format!("Не удалось запустить Horizon: {e}"))?;
+    let mut journal = crate::journal::Log::open(crate::journal::Kind::Launch);
+    journal.info(
+        "start",
+        &format!(
+            "client: {} | resources: {} | game dir: {} | name: {} | server: {}",
+            version.client,
+            version.resources,
+            game_dir.display(),
+            profile.player_name,
+            join.as_deref().unwrap_or("-")
+        ),
+    );
+    let child = match crate::sysutil::quiet(&mut command).spawn() {
+        Ok(child) => child,
+        Err(error) => {
+            let message = format!("Не удалось запустить Horizon: {error}");
+            journal.error("start", &message);
+            return Err(message);
+        }
+    };
     let pid = child.id();
     let started_at = now_ms();
+    journal.info("start", &format!("pid {pid}"));
 
     {
         let mut store = store_lock(&state);
@@ -734,8 +756,19 @@ fn start_game(
     let log_path_string = log_path.to_string_lossy().into_owned();
     std::thread::spawn(move || {
         let mut child = child;
+        let started = std::time::Instant::now();
         let status = child.wait();
         let code = status.ok().and_then(|s| s.code());
+        let elapsed = started.elapsed();
+        let tail = std::fs::read_to_string(&log_path_string)
+            .map(|text| {
+                let lines: Vec<&str> = text.lines().rev().take(25).collect();
+                let mut lines = lines;
+                lines.reverse();
+                lines.join("\n")
+            })
+            .unwrap_or_default();
+        let early = elapsed.as_secs() < 20;
         {
             let state = handle.state::<AppState>();
             {
@@ -747,12 +780,29 @@ fn start_game(
             }
             *running_lock(&state) = None;
         }
+        {
+            let mut journal = crate::journal::Log::open(crate::journal::Kind::Launch);
+            let level = if code == Some(0) && !early { "INFO" } else { "ERROR" };
+            journal.write(
+                level,
+                "exit",
+                &format!(
+                    "код {code:?} через {:.1} с, лог {log_path_string}",
+                    elapsed.as_secs_f64()
+                ),
+            );
+            if !tail.is_empty() {
+                journal.write(level, "output", &tail);
+            }
+        }
         let _ = handle.emit(
             "game-exited",
             GameExited {
                 profile_id,
                 code,
                 log_path: log_path_string,
+                tail,
+                early,
             },
         );
     });
@@ -1211,6 +1261,13 @@ pub fn read_game_log(
     Ok(horizon::tail_log(&game_dir, count))
 }
 
+/// Full check of a prepared Horizon resource folder: manifests plus every asset
+/// listed in `asset-index.json`, with the missing files named.
+#[tauri::command]
+pub fn horizon_check(folder: String) -> crate::clients::ResourceCheck {
+    crate::clients::validate_resources(Path::new(&folder))
+}
+
 #[tauri::command]
 pub fn diagnostics(state: State<'_, AppState>) -> Result<Diagnostics, String> {
     let store = store_lock(&state);
@@ -1335,6 +1392,38 @@ pub fn diagnostics(state: State<'_, AppState>) -> Result<Diagnostics, String> {
 
 fn spawn_open(target: &str) -> Result<(), String> {
     crate::sysutil::open_target(target)
+}
+
+/// Opens the folder that holds launcher.log, assets-download.log, import.log,
+/// prepare.log and game-launch.log.
+#[tauri::command]
+pub fn open_logs_folder() -> Result<(), String> {
+    let dir = crate::journal::ensure_dir()?;
+    spawn_open(&dir.to_string_lossy())
+}
+
+#[tauri::command]
+pub fn open_last_log() -> Result<(), String> {
+    let path = crate::journal::last_log().ok_or_else(|| {
+        "Логов пока нет: запустите игру или проверку ресурсов, и файл появится.".to_string()
+    })?;
+    spawn_open(&path.to_string_lossy())
+}
+
+/// Short list of log files and their folder, for the diagnostics report.
+#[tauri::command]
+pub fn logs_info() -> LogsInfo {
+    LogsInfo {
+        folder: crate::journal::logs_dir().to_string_lossy().into_owned(),
+        files: crate::journal::summary(),
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LogsInfo {
+    pub folder: String,
+    pub files: String,
 }
 
 #[tauri::command]
@@ -1598,7 +1687,12 @@ mod tests {
         let version = root.join("fake-horizon");
         let resources = version.join(".local/horizon-client/26.3");
         fs::create_dir_all(&resources).unwrap();
-        fs::write(resources.join("asset-index.json"), "{}").unwrap();
+        fs::write(resources.join("asset-index.json"), "{\"objects\":{}}").unwrap();
+        fs::write(
+            resources.join("horizon-resources.json"),
+            "{\"minecraft\":\"26.3\"}",
+        )
+        .unwrap();
         let args_file = root.join("args.txt");
         let client = version.join("horizon-client");
         fs::write(

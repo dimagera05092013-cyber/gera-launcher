@@ -39,12 +39,28 @@ fn main() {
         };
         std::process::exit(gera_launcher_lib::import_cli(folder, source));
     }
+    if let Some(position) = args.iter().position(|arg| arg == "--horizon-prepare") {
+        let rest = &args[position + 1..];
+        let Some(folder) = rest.first() else {
+            eprintln!("Использование: gera-launcher --horizon-prepare <папка клиента> [<папка .minecraft>]");
+            std::process::exit(2);
+        };
+        let minecraft = rest.get(1).cloned().unwrap_or_default();
+        std::process::exit(gera_launcher_lib::prepare_cli(folder, &minecraft));
+    }
     if let Some(position) = args.iter().position(|arg| arg == "--java-install") {
         let Some(id) = args.get(position + 1) else {
             eprintln!("Использование: gera-launcher --java-install <версия>");
             std::process::exit(2);
         };
         std::process::exit(gera_launcher_lib::java_install_cli(id));
+    }
+    if let Some(position) = args.iter().position(|arg| arg == "--java-check") {
+        let Some(id) = args.get(position + 1) else {
+            eprintln!("Использование: gera-launcher --java-check <версия>");
+            std::process::exit(2);
+        };
+        std::process::exit(gera_launcher_lib::java_check_cli(id));
     }
     if let Some(position) = args.iter().position(|arg| arg == "--java-play") {
         let (Some(id), Some(player)) = (args.get(position + 1), args.get(position + 2)) else {

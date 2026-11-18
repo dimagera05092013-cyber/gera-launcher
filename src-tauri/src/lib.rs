@@ -1,6 +1,7 @@
 mod clients;
 mod commands;
 mod horizon;
+mod journal;
 mod mods;
 mod native;
 mod net;
@@ -64,9 +65,41 @@ pub fn java_install_cli(id: &str) -> i32 {
     }
 }
 
+/// Headless Horizon preparation: `gera-launcher --horizon-prepare <папка клиента> [<.minecraft>]`.
+pub fn prepare_cli(folder: &str, minecraft: &str) -> i32 {
+    let mc = if minecraft.trim().is_empty() { None } else { Some(minecraft) };
+    match clients::prepare(folder, minecraft, mc) {
+        Ok(message) => {
+            println!("{message}");
+            0
+        }
+        Err(error) => {
+            eprintln!("ОШИБКА:\n{error}");
+            1
+        }
+    }
+}
+
+/// Headless vanilla check: `gera-launcher --java-check <версия>`.
+pub fn java_check_cli(id: &str) -> i32 {
+    match vanilla::check_blocking(id.to_string()) {
+        Ok(result) => {
+            println!("{}", result.detail);
+            for item in result.missing.iter().take(40) {
+                println!("  нет: {item}");
+            }
+            if result.ok { 0 } else { 1 }
+        }
+        Err(error) => {
+            eprintln!("ОШИБКА: {error}");
+            1
+        }
+    }
+}
+
 /// Headless vanilla launch: `gera-launcher --java-play <версия> <ник>`.
 pub fn java_play_cli(id: &str, player: &str) -> i32 {
-    match vanilla::launch_blocking(id.to_string(), player.to_string()) {
+    match vanilla::launch_blocking(None, id.to_string(), player.to_string()) {
         Ok(result) => {
             println!("ГОТОВО: PID {} · лог {}", result.pid, result.log_path);
             0
@@ -162,6 +195,12 @@ pub fn run() {
             vanilla::java_install,
             vanilla::java_launch,
             vanilla::java_folder,
+            vanilla::java_check,
+            vanilla::java_cancel,
+            commands::open_logs_folder,
+            commands::open_last_log,
+            commands::logs_info,
+            commands::horizon_check,
         ])
         .run(tauri::generate_context!())
         .expect("GERA Launcher failed to start");

@@ -117,9 +117,10 @@ fn inspect(dir: &Path, source: &str) -> Option<HorizonVersion> {
     })
 }
 
-/// Resources live in <version>/.local/horizon-client/<minecraft>/ and are
-/// complete when the preparer's asset-index.json is there.
-fn prepared_resources(version_dir: &Path) -> (Option<PathBuf>, String, bool) {
+/// Resources live in <version>/.local/horizon-client/<minecraft>/. Horizon
+/// itself refuses to start without `horizon-resources.json`, so both manifests
+/// are required before GERA calls a folder ready.
+pub fn prepared_resources(version_dir: &Path) -> (Option<PathBuf>, String, bool) {
     let root = version_dir.join(".local/horizon-client");
     let mut fallback: Option<(PathBuf, String, bool)> = None;
     let Ok(entries) = fs::read_dir(&root) else {
@@ -134,7 +135,8 @@ fn prepared_resources(version_dir: &Path) -> (Option<PathBuf>, String, bool) {
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| "26.3".into());
-        let ready = dir.join("asset-index.json").is_file();
+        let ready = dir.join("asset-index.json").is_file()
+            && dir.join("horizon-resources.json").is_file();
         if ready {
             return (Some(dir), name, true);
         }
@@ -389,4 +391,48 @@ pub fn tail_log(game_dir: &Path, lines: usize) -> Option<String> {
     let mut collected: Vec<&str> = text.lines().rev().take(lines).collect();
     collected.reverse();
     Some(collected.join("\n"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_version(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "gera-horizon-{name}-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn half_prepared_folder_is_not_ready() {
+        let dir = temp_version("half");
+        let resources = dir.join(".local/horizon-client/26.3");
+        fs::create_dir_all(&resources).unwrap();
+        fs::write(resources.join("asset-index.json"), b"{\"objects\":{}}").unwrap();
+        let (_path, _minecraft, ready) = prepared_resources(&dir);
+        assert!(!ready, "asset-index.json alone must not count as ready");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn fully_prepared_folder_is_ready() {
+        let dir = temp_version("full");
+        let resources = dir.join(".local/horizon-client/26.3");
+        fs::create_dir_all(&resources).unwrap();
+        fs::write(resources.join("asset-index.json"), b"{\"objects\":{}}").unwrap();
+        fs::write(
+            resources.join("horizon-resources.json"),
+            b"{\"minecraft\":\"26.3\"}",
+        )
+        .unwrap();
+        let (path, minecraft, ready) = prepared_resources(&dir);
+        assert!(ready);
+        assert_eq!(minecraft, "26.3");
+        assert_eq!(path.unwrap(), resources);
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

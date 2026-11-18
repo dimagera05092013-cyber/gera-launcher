@@ -1,6 +1,6 @@
 [package]
 name = "gera-launcher"
-version = "0.10.0"
+version = "0.11.0"
 description = "GERA Launcher — a Material You launcher for Horizon"
 authors = ["GERA"]
 edition = "2021"
@@ -22,6 +22,8 @@ md-5 = "0.10"
 flate2 = "1"
 tar = "0.4"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+ureq = "3"
+sha1 = "0.10"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

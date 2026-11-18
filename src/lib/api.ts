@@ -26,6 +26,9 @@ import type {
   UpdateInfo,
   JavaVersionInfo,
   JavaLaunch,
+  JavaCheck,
+  LogsInfo,
+  ResourceCheck,
 } from "./types";
 
 export const api = {
@@ -102,6 +105,12 @@ export const api = {
   javaInstall: (id: string) => invoke<void>("java_install", { id }),
   javaLaunch: (id: string, player: string) => invoke<JavaLaunch>("java_launch", { id, player }),
   javaFolder: () => invoke<string>("java_folder"),
+  javaCheck: (id: string) => invoke<JavaCheck>("java_check", { id }),
+  javaCancel: () => invoke<void>("java_cancel"),
+  openLogsFolder: () => invoke<void>("open_logs_folder"),
+  openLastLog: () => invoke<void>("open_last_log"),
+  logsInfo: () => invoke<LogsInfo>("logs_info"),
+  horizonCheck: (folder: string) => invoke<ResourceCheck>("horizon_check", { folder }),
 };
 
 export function errorText(error: unknown): string {

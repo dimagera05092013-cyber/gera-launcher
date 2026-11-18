@@ -5,7 +5,7 @@
   import { notify } from "../lib/store.svelte";
   import Button from "../lib/components/Button.svelte";
   import Icon from "../lib/components/Icon.svelte";
-  import type { JavaProgress, JavaVersionInfo } from "../lib/types";
+  import type { JavaExited, JavaProgress, JavaVersionInfo } from "../lib/types";
 
   let versions = $state<JavaVersionInfo[]>([]);
   let loading = $state(true);
@@ -15,6 +15,7 @@
   let progress = $state<JavaProgress | null>(null);
   let player = $state(localStorage.getItem("gera.java.name") ?? "Player");
   let folder = $state("");
+  let checking = $state<string | null>(null);
 
   const nameOk = $derived(
     player.trim().length >= 3 &&
@@ -38,7 +39,7 @@
   async function install(version: JavaVersionInfo): Promise<boolean> {
     if (installing) return false;
     installing = version.id;
-    progress = { stage: "version", label: "Начинаем…", done: 0, total: 0 };
+    progress = { stage: "meta", label: "Начинаем…", done: 0, total: 0, filesDone: 0, filesTotal: 0, speed: 0 };
     try {
       await api.javaInstall(version.id);
       await load();
@@ -69,6 +70,35 @@
     await play(latest);
   }
 
+  async function cancel() {
+    try {
+      await api.javaCancel();
+    } catch (caught) {
+      notify(errorText(caught), "error");
+    }
+  }
+
+  async function check(version: JavaVersionInfo) {
+    if (checking) return;
+    checking = version.id;
+    try {
+      const result = await api.javaCheck(version.id);
+      if (result.ok) {
+        notify(result.detail, "success");
+      } else {
+        const lines = result.missing.slice(0, 5).join("\n");
+        notify(
+          `${result.detail}\n${lines}${result.missing.length > 5 ? "\n…" : ""}`,
+          "error",
+        );
+      }
+    } catch (caught) {
+      notify(errorText(caught), "error");
+    } finally {
+      checking = null;
+    }
+  }
+
   async function play(version: JavaVersionInfo) {
     if (!nameOk || starting) return;
     localStorage.setItem("gera.java.name", player.trim());
@@ -97,6 +127,28 @@
     return `${(bytes / 1024 / 1024).toFixed(0)} МБ`;
   }
 
+  function speed(bytes: number): string {
+    if (!bytes) return "";
+    const value = bytes / 1024 / 1024;
+    return value >= 1 ? `${value.toFixed(1)} МБ/с` : `${Math.round(bytes / 1024)} КБ/с`;
+  }
+
+  function stageName(stage: string): string {
+    const names: Record<string, string> = {
+      meta: "Метаданные",
+      client: "Клиент",
+      libraries: "Библиотеки",
+      natives: "Нативные файлы",
+      index: "Asset Index",
+      assets: "Ресурсы",
+      verify: "Проверка",
+      java: "Java",
+      virtual: "Старые ресурсы",
+      done: "Готово",
+    };
+    return names[stage] ?? stage;
+  }
+
   function date(iso: string): string {
     if (!iso) return "";
     const parsed = new Date(iso);
@@ -110,7 +162,23 @@
     void listen<JavaProgress>("java-progress", (event) => {
       progress = event.payload;
     }).then((unlisten) => (off = unlisten));
-    return () => off?.();
+    let offExit: (() => void) | undefined;
+    void listen<JavaExited>("java-exited", (event) => {
+      const info = event.payload;
+      if (info.early) {
+        const tail = info.tail.split("\n").slice(-4).join("\n");
+        notify(
+          `Minecraft закрылся сразу после запуска (код ${info.code ?? "?"}).\n${tail}\nЛог: ${info.logPath}`,
+          "error",
+        );
+      } else if (info.code !== 0 && info.code !== null) {
+        notify(`Minecraft закрылся с кодом ${info.code}. Лог: ${info.logPath}`, "error");
+      }
+    }).then((unlisten) => (offExit = unlisten));
+    return () => {
+      off?.();
+      offExit?.();
+    };
   });
 </script>
 
@@ -159,16 +227,25 @@
       <span class="head-icon primary"><Icon name="download" size={20} /></span>
       <div class="grow">
         <strong>Устанавливаем Minecraft {installing}</strong>
-        <span>{progress.label}</span>
+        <span>{stageName(progress.stage)} · {progress.label}</span>
       </div>
       <span class="mono">{percent}%</span>
+      <Button variant="tonal" size="sm" onclick={cancel}>Отменить</Button>
     </div>
     <div class="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
       <span style={`width:${percent}%`}></span>
     </div>
-    {#if progress.total > 0}
-      <p class="hint">{megabytes(progress.done)} из {megabytes(progress.total)}</p>
-    {/if}
+    <p class="hint">
+      {#if progress.filesTotal > 0}
+        Файлов: {progress.filesDone} из {progress.filesTotal} ·{" "}
+      {/if}
+      {#if progress.total > 0}
+        {megabytes(progress.done)} из {megabytes(progress.total)}
+      {/if}
+      {#if progress.speed > 0}
+        · {speed(progress.speed)}
+      {/if}
+    </p>
     <p class="hint">
       Ресурсы и Java скачиваются один раз. При следующих установках они переиспользуются.
     </p>
@@ -201,6 +278,15 @@
             <span>{date(version.released)}{version.installed ? " · установлена" : ""}</span>
           </div>
           {#if version.installed}
+            <Button
+              size="sm"
+              variant="text"
+              icon="check"
+              disabled={!!checking || !!installing}
+              onclick={() => check(version)}
+            >
+              {checking === version.id ? "Проверяем…" : "Проверить"}
+            </Button>
             <Button
               size="sm"
               icon="play"
@@ -308,6 +394,9 @@
   }
   .hint.error {
     color: var(--error);
+  }
+  .version :global(.btn) {
+    flex: none;
   }
   .legal {
     margin-top: 18px;

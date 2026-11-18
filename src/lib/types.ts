@@ -172,6 +172,8 @@ export interface GameExited {
   profileId: string;
   code: number | null;
   logPath: string;
+  tail: string;
+  early: boolean;
 }
 
 export interface NativeJob {
@@ -321,9 +323,41 @@ export interface JavaProgress {
   label: string;
   done: number;
   total: number;
+  filesDone: number;
+  filesTotal: number;
+  speed: number;
+}
+
+export interface JavaCheck {
+  id: string;
+  ok: boolean;
+  checked: number;
+  missing: string[];
+  detail: string;
+}
+
+export interface JavaExited {
+  id: string;
+  code: number | null;
+  logPath: string;
+  early: boolean;
+  tail: string;
+}
+
+export interface LogsInfo {
+  folder: string;
+  files: string;
 }
 
 export interface JavaLaunch {
   pid: number;
   logPath: string;
+}
+
+export interface ResourceCheck {
+  ok: boolean;
+  minecraft: string;
+  checked: number;
+  missing: string[];
+  detail: string;
 }

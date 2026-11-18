@@ -50,13 +50,18 @@
     })();
 
     void listen<GameExited>("game-exited", (event) => {
-      const code = event.payload.code;
-      notify(
-        code === 0 || code === null
-          ? "Horizon закрыт."
-          : `Horizon завершился с кодом ${code}. Лог сохранён.`,
-        code === 0 || code === null ? "info" : "error",
-      );
+      const { code, early, tail, logPath } = event.payload;
+      if (early) {
+        const lines = tail.split("\n").slice(-4).join("\n");
+        notify(
+          `Horizon закрылся сразу после запуска (код ${code ?? "?"}).\n${lines}\nЛог: ${logPath}`,
+          "error",
+        );
+      } else if (code === 0 || code === null) {
+        notify("Horizon закрыт.", "info");
+      } else {
+        notify(`Horizon завершился с кодом ${code}. Лог: ${logPath}`, "error");
+      }
       void reload();
     }).then((dispose) => {
       unlisten = dispose;

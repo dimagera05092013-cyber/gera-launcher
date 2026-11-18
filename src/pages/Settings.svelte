@@ -33,6 +33,7 @@
   let serverJar = $state(untrack(() => settings?.serverJar ?? ""));
   let diag = $state<Diagnostics | null>(null);
   let diagBusy = $state(false);
+  let logs = $state<{ folder: string; files: string } | null>(null);
   let showPaths = $state(false);
   let native = $state<NativeStatus | null>(null);
   let reducedMotion = $state(false);
@@ -213,10 +214,63 @@
     diagBusy = true;
     try {
       diag = await api.diagnostics();
+      logs = await api.logsInfo();
     } catch (caught) {
       notify(errorText(caught), "error");
     } finally {
       diagBusy = false;
+    }
+  }
+
+  async function openLogs() {
+    try {
+      await api.openLogsFolder();
+    } catch (caught) {
+      notify(errorText(caught), "error");
+    }
+  }
+
+  async function openLastLog() {
+    try {
+      await api.openLastLog();
+    } catch (caught) {
+      notify(errorText(caught), "error");
+    }
+  }
+
+  async function copyReport() {
+    const lines: string[] = [];
+    lines.push(`GERA Launcher ${ui.boot?.version ?? "?"}`);
+    lines.push(`Платформа: ${navigator.userAgent}`);
+    if (diag) {
+      lines.push(`Состояние: ${diag.ok ? "всё в порядке" : "есть проблемы"}`);
+      for (const item of diag.items) {
+        lines.push(`- ${item.label} [${item.status}]: ${item.detail}`);
+      }
+      if (diag.launchApi) {
+        lines.push(
+          `Horizon ${diag.launchApi.horizon}, Minecraft ${diag.launchApi.minecraft}, API ${diag.launchApi.launchApi}`,
+        );
+      }
+    } else {
+      lines.push("Диагностика ещё не запускалась.");
+    }
+    if (logs) {
+      lines.push(`Логи: ${logs.folder}`);
+      lines.push(`Файлы: ${logs.files || "нет"}`);
+    }
+    const text = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      notify("Отчёт скопирован в буфер обмена.", "success");
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      notify("Отчёт скопирован.", "success");
     }
   }
 
@@ -756,6 +810,16 @@
       </div>
     </div>
 
+    <div class="row log-actions">
+      <Button variant="text" size="sm" icon="folder" onclick={openLogs}>Открыть папку логов</Button>
+      <Button variant="text" size="sm" icon="terminal" onclick={openLastLog}>Открыть последний лог</Button>
+      <Button variant="text" size="sm" icon="copy" onclick={copyReport}>Скопировать отчёт</Button>
+    </div>
+    {#if logs}
+      <p class="hint">Логи: <span class="mono">{logs.folder}</span></p>
+      {#if logs.files}<p class="hint">Файлы: {logs.files}</p>{/if}
+    {/if}
+
     {#if diag}
       <div class="list diag-list">
         {#each diag.items as item (item.label)}
@@ -833,6 +897,10 @@
 </Dialog>
 
 <style>
+  .log-actions {
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
   .settings {
     max-width: 920px;
   }
