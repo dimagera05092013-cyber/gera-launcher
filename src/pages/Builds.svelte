@@ -305,15 +305,6 @@
     </div>
   {/if}
 
-  <div class="banner info">
-    <Icon name="info" size={20} />
-    <div>
-      <strong>Данные в безопасности.</strong>
-      Удаление сборки убирает только запись из GERA. Миры, настройки и моды остаются в папке на
-      диске. Дублирование копирует миры и моды, но пропускает кэш, логи и скриншоты.
-    </div>
-  </div>
-
   <div class="row">
     <Button variant="text" icon="arrow" onclick={() => go("home")}>На главную</Button>
   </div>
@@ -462,6 +453,7 @@
   }
 
   .build {
+    position: relative;
     display: flex;
     flex-direction: column;
     border-radius: var(--shape-2xl);
@@ -477,7 +469,16 @@
   }
   .build.active {
     background: var(--surface-container);
-    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent);
+  }
+  /* An inset shadow sits under the artwork and disappears along the top edge;
+     the outline is drawn above the card instead. */
+  .build.active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    border-radius: inherit;
+    pointer-events: none;
   }
 
   .build-art {

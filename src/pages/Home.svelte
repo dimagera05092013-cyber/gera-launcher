@@ -313,7 +313,7 @@
     </button>
   </section>
 
-  {#if profile}
+  {#if profile && (modsLoading || updates.length)}
     <section class="card updates">
       <div class="section-head">
         <h2>Обновления модов</h2>

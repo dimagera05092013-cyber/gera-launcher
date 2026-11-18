@@ -2,6 +2,7 @@
   import { onMount, untrack } from "svelte";
   import { ui, saveSettings, reload, refreshHorizon, notify } from "../lib/store.svelte";
   import { api, errorText } from "../lib/api";
+  import { applyTheme } from "../lib/theme";
   import { checkUpdates, updater } from "../lib/update.svelte";
   import type { ClientRelease, Diagnostics, NativeStatus, Profile } from "../lib/types";
   import Button from "../lib/components/Button.svelte";
@@ -86,6 +87,21 @@
 
   async function setAccent(accent: string) {
     await saveSettings({ accent });
+  }
+
+  // The colour picker fires `input` while the palette is still open: show the
+  // result at once, then save on `change`.
+  function previewAccent(event: Event) {
+    if (!settings) return;
+    const value = (event.currentTarget as HTMLInputElement).value;
+    applyTheme(value, settings.theme, settings.uiMode, settings.gradients);
+  }
+
+  function restoreAccent(event: Event) {
+    if (!settings) return;
+    const value = (event.currentTarget as HTMLInputElement).value;
+    if (value.toLowerCase() === settings.accent.toLowerCase()) return;
+    applyTheme(settings.accent, settings.theme, settings.uiMode, settings.gradients);
   }
 
   async function setGradients(value: boolean) {
@@ -410,7 +426,9 @@
           type="color"
           aria-label="Свой акцентный цвет"
           value={settings?.accent ?? "#6750A4"}
+          oninput={previewAccent}
           onchange={(event) => setAccent((event.currentTarget as HTMLInputElement).value)}
+          onblur={restoreAccent}
         />
         <span class="mono">{settings?.accent ?? "#6750A4"}</span>
       </div>
@@ -765,7 +783,10 @@
         <Icon name="info" size={18} />
         <span class="grow">
           <strong>Лицензии</strong>
-          <span>Horizon распространяется по MIT License. Minecraft — торговая марка Mojang.</span>
+          <span>
+            GERA распространяется по MIT License, Horizon — по LGPL-3.0. Minecraft — торговая
+            марка Mojang Studios и Microsoft.
+          </span>
         </span>
       </div>
       <div class="list-row">
@@ -844,6 +865,64 @@
         </div>
       {/if}
     {/if}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="head-icon tertiary"><Icon name="info" size={22} /></span>
+      <div>
+        <h2>Документы</h2>
+        <p>Условия использования, политика конфиденциальности и лицензия проекта.</p>
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="list-row">
+        <Icon name="info" size={18} />
+        <span class="grow">
+          <strong>Условия использования</strong>
+          <span>Версия 1.0 · правила использования GERA Launcher</span>
+        </span>
+        <Button
+          size="sm"
+          variant="text"
+          icon="open"
+          onclick={() => api.openUrl("https://github.com/gera2347/gera-launcher/blob/main/docs/TERMS.md")}
+        >
+          Открыть
+        </Button>
+      </div>
+      <div class="list-row">
+        <Icon name="info" size={18} />
+        <span class="grow">
+          <strong>Политика конфиденциальности</strong>
+          <span>Какие данные GERA хранит на компьютере и куда обращается</span>
+        </span>
+        <Button
+          size="sm"
+          variant="text"
+          icon="open"
+          onclick={() => api.openUrl("https://github.com/gera2347/gera-launcher/blob/main/docs/PRIVACY.md")}
+        >
+          Открыть
+        </Button>
+      </div>
+      <div class="list-row">
+        <Icon name="info" size={18} />
+        <span class="grow">
+          <strong>Лицензия</strong>
+          <span>MIT License — исходный код GERA Launcher</span>
+        </span>
+        <Button
+          size="sm"
+          variant="text"
+          icon="open"
+          onclick={() => api.openUrl("https://github.com/gera2347/gera-launcher/blob/main/LICENSE")}
+        >
+          Открыть
+        </Button>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -1060,7 +1139,15 @@
     background: var(--surface-container-high);
   }
   .palette.active {
-    box-shadow: inset 0 0 0 2px var(--primary);
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+  }
+  .palette.active .palette-hex {
+    color: var(--on-primary-container);
+    opacity: 0.75;
+  }
+  .palette.active:hover {
+    background: color-mix(in srgb, var(--on-primary-container) 8%, var(--primary-container));
   }
   .palette-dot {
     width: 38px;

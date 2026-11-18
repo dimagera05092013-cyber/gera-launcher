@@ -873,14 +873,6 @@
       </div>
     {/if}
 
-    <div class="banner info">
-      <Icon name="info" size={20} />
-      <div>
-        <strong>Импорт безопасен.</strong>
-        GERA читает <span class="mono">servers.dat</span> Horizon и создаёт собственные записи.
-        Исходный список мультиплеера не перезаписывается, серверы из Horizon не удаляются.
-      </div>
-    </div>
   {/if}
 </div>
 
@@ -1304,12 +1296,14 @@
     position: relative;
     height: 130px;
     overflow: hidden;
-    background:
-      linear-gradient(
-        112deg,
-        color-mix(in srgb, var(--tint) 32%, var(--surface-container-high)) 0%,
-        var(--surface-container-high) 64%
-      );
+    background: color-mix(in srgb, var(--tint) 22%, var(--surface-container-high));
+  }
+  :global([data-gradient="on"]) .banner-area {
+    background: linear-gradient(
+      112deg,
+      color-mix(in srgb, var(--tint) 32%, var(--surface-container-high)) 0%,
+      var(--surface-container-high) 64%
+    );
   }
   .banner-area > img {
     display: block;
@@ -1473,6 +1467,7 @@
   .launch-info {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--space-3);
     padding: 12px 16px;
     border-radius: var(--shape-lg);
@@ -1483,6 +1478,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    flex: 1 1 220px;
   }
   .launch-info strong {
     font-size: 13.5px;
@@ -1493,6 +1489,13 @@
   }
   .launch-info span {
     font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .launch-info .select.slim {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .select.slim {

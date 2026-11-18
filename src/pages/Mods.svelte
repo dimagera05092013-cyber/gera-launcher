@@ -639,8 +639,16 @@
   {:else if !visible.length}
     <div class="empty">
       <Icon name="mods" size={30} />
-      <strong>Ничего не найдено</strong>
-      <span>Измените запрос, снимите фильтр или выберите другую категорию.</span>
+      {#if kind === "native-mod" && !nativeMods.length}
+        <strong>Нативные моды временно недоступны</strong>
+        <span>
+          Это не проблема GERA: Horizon переводит каталог модов на новый формат, и нативные
+          моды ещё не перенесены. Ждём исправления на стороне Horizon. Спасибо за понимание :)
+        </span>
+      {:else}
+        <strong>Ничего не найдено</strong>
+        <span>Измените запрос, снимите фильтр или выберите другую категорию.</span>
+      {/if}
     </div>
   {:else}
     <div class="mod-grid">

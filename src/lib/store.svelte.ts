@@ -98,11 +98,16 @@ export async function saveSettings(patch: Partial<Settings>) {
 
 export async function activateProfile(id: string) {
   if (!ui.boot) return;
-  if (ui.boot.activeProfile?.id === id) return;
+  const next = ui.boot.profiles.find((item) => item.id === id);
+  if (!next || ui.boot.activeProfile?.id === id) return;
+  // Swap the card in place: a full bootstrap reload resets the page and makes
+  // the whole layout jump while the player is picking a build.
+  const previous = ui.boot.activeProfile;
+  ui.boot.activeProfile = next;
   try {
     await api.activateProfile(id);
-    await reload();
   } catch (error) {
+    ui.boot.activeProfile = previous;
     notify(errorText(error), "error");
   }
 }

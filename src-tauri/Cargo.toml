@@ -1,6 +1,6 @@
 [package]
 name = "gera-launcher"
-version = "0.11.0"
+version = "0.11.1"
 description = "GERA Launcher — a Material You launcher for Horizon"
 authors = ["GERA"]
 edition = "2021"

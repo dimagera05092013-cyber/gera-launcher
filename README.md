@@ -101,6 +101,12 @@ GitHub Actions собирает Windows и Linux сборки и публику�
 Horizon не связан с Mojang Studios или Microsoft. Minecraft — торговая марка
 Mojang Synergies AB.
 
+## Документы
+
+- [Условия использования](docs/TERMS.md)
+- [Политика конфиденциальности](docs/PRIVACY.md)
+- [MIT License](LICENSE)
+
 ## Лицензия
 
 Код GERA Launcher распространяется по [MIT License](LICENSE). Клиент Horizon и
