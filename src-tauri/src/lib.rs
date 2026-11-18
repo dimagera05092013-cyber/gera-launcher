@@ -132,6 +132,22 @@ pub fn apply_window_theme(app: &tauri::AppHandle, theme: &str) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    {
+        let mut log = journal::Log::open(journal::Kind::Launcher);
+        log.info(
+            "start",
+            &format!(
+                "GERA Launcher {} ({}, {})",
+                env!("CARGO_PKG_VERSION"),
+                std::env::consts::OS,
+                std::env::consts::ARCH
+            ),
+        );
+        log.info(
+            "start",
+            &format!("данные: {}", paths::Paths::new().data.display()),
+        );
+    }
     tauri::Builder::default()
         .setup(|app| {
             let paths = paths::Paths::new();

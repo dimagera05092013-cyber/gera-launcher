@@ -262,7 +262,15 @@ pub fn download_to(
             written > 0
         };
         if !complete {
-            last = format!("загрузка прервана: {written} из {}", expected_size.max(total));
+            let reason = if last.is_empty() {
+                String::new()
+            } else {
+                format!(", {last}")
+            };
+            last = format!(
+                "загрузка прервана: {written} из {}{reason}",
+                expected_size.max(total)
+            );
             continue;
         }
         finish(&part, destination)?;
@@ -309,13 +317,6 @@ fn matches_sha1(path: &Path, expected: Option<&str>) -> Result<bool, String> {
     }
     let actual = sha1_file(path)?;
     Ok(actual.eq_ignore_ascii_case(expected))
-}
-
-/// SHA-1 of a text, for checking metadata kept in memory.
-pub fn sha1_text(text: &str) -> String {
-    let mut hasher = Sha1::new();
-    hasher.update(text.as_bytes());
-    format!("{:x}", hasher.finalize())
 }
 
 pub fn sha1_file(path: &Path) -> Result<String, String> {

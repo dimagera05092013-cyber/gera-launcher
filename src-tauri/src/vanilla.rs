@@ -175,44 +175,6 @@ fn version_json(id: &str) -> Result<Value, String> {
     serde_json::from_str(&text).map_err(|e| format!("Повреждён файл версии {id}: {e}"))
 }
 
-/// horizon-prepare verifies Mojang's own SHA-1 for every version JSON in the
-/// game folder. Launchers that rewrite the file (including older GERA builds,
-/// which pretty-printed it) make the preparer refuse to run, which then shows
-/// up as a broken launch. Rewrite such files with Mojang's exact bytes.
-pub fn repair_official_jsons(dir: &Path) -> Vec<String> {
-    let mut repaired = Vec::new();
-    let Ok(manifest) = manifest() else {
-        return repaired;
-    };
-    let Ok(entries) = fs::read_dir(dir.join("versions")) else {
-        return repaired;
-    };
-    for entry in entries.flatten() {
-        let id = entry.file_name().to_string_lossy().into_owned();
-        let path = entry.path().join(format!("{id}.json"));
-        if !path.is_file() {
-            continue;
-        }
-        let Some(item) = version_entry(&manifest, &id) else {
-            continue;
-        };
-        let (Some(expected), Some(url)) = (item["sha1"].as_str(), item["url"].as_str()) else {
-            continue;
-        };
-        let actual = net::sha1_file(&path).unwrap_or_default();
-        if actual.eq_ignore_ascii_case(expected) {
-            continue;
-        }
-        if let Ok(text) = net::fetch_text(url, 60) {
-            if net::sha1_text(&text).eq_ignore_ascii_case(expected) && fs::write(&path, &text).is_ok()
-            {
-                repaired.push(id);
-            }
-        }
-    }
-    repaired
-}
-
 /// Latest stable versions, newest first.
 pub fn list_versions() -> Result<Vec<JavaVersionInfo>, String> {
     let manifest = manifest()?;
