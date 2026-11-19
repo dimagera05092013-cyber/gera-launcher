@@ -6,8 +6,9 @@
   import TopBar from "./lib/components/TopBar.svelte";
   import Snackbar from "./lib/components/Snackbar.svelte";
   import UpdateDialog from "./lib/components/UpdateDialog.svelte";
+  import Guide from "./lib/components/Guide.svelte";
   import Button from "./lib/components/Button.svelte";
-  import { ui, init, notify, reload } from "./lib/store.svelte";
+  import { ui, init, notify, reload, openGuide, guideSeen } from "./lib/store.svelte";
   import { api, errorText } from "./lib/api";
   import { checkUpdates } from "./lib/update.svelte";
   import { start } from "./lib/router.svelte";
@@ -45,7 +46,10 @@
   onMount(() => {
     void (async () => {
       await init();
-      if (ui.ready) await start("home");
+      if (ui.ready) {
+        await start("home");
+        if (!guideSeen()) openGuide();
+      }
       void checkUpdates();
     })();
 
@@ -138,6 +142,7 @@
     </main>
   {/if}
   <UpdateDialog />
+  <Guide />
   <Snackbar />
 </div>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
-  import { ui, saveSettings, reload, refreshHorizon, notify } from "../lib/store.svelte";
+  import { ui, saveSettings, reload, refreshHorizon, notify, openGuide } from "../lib/store.svelte";
   import { api, errorText } from "../lib/api";
   import { applyTheme } from "../lib/theme";
   import { checkUpdates, updater } from "../lib/update.svelte";
@@ -871,12 +871,20 @@
     <div class="card-head">
       <span class="head-icon tertiary"><Icon name="info" size={22} /></span>
       <div>
-        <h2>Документы</h2>
+        <h2>Документы и помощь</h2>
         <p>Условия использования, политика конфиденциальности и лицензия проекта.</p>
       </div>
     </div>
 
     <div class="list">
+      <div class="list-row">
+        <Icon name="play" size={18} />
+        <span class="grow">
+          <strong>Как подготовить Minecraft</strong>
+          <span>Короткий гайд: Java, клиент Horizon, сборка и первый запуск</span>
+        </span>
+        <Button size="sm" variant="tonal" icon="open" onclick={openGuide}>Открыть</Button>
+      </div>
       <div class="list-row">
         <Icon name="info" size={18} />
         <span class="grow">

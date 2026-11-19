@@ -22,7 +22,31 @@ export const ui = $state({
   pageLoading: false,
   busy: false,
   toast: null as Toast | null,
+  guideOpen: false,
 });
+
+const guideSeenKey = "gera.guide.seen";
+
+export function openGuide() {
+  ui.guideOpen = true;
+}
+
+export function dismissGuide() {
+  ui.guideOpen = false;
+  try {
+    localStorage.setItem(guideSeenKey, "1");
+  } catch {
+    // Private storage is unavailable: the guide simply shows again next time.
+  }
+}
+
+export function guideSeen() {
+  try {
+    return localStorage.getItem(guideSeenKey) === "1";
+  } catch {
+    return true;
+  }
+}
 
 let toastId = 0;
 
